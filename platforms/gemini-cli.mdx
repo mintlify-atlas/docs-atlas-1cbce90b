@@ -1,0 +1,65 @@
+---
+title: "Gemini CLI"
+description: "Install Superpowers on Gemini CLI as a native extension with one command."
+---
+
+Superpowers integrates with Gemini CLI as a native extension. Skill metadata loads at session start; full skill content activates on demand via the `activate_skill` tool.
+
+## Installation
+
+```bash
+gemini extensions install https://github.com/obra/superpowers
+```
+
+## Verify installation
+
+Start a new Gemini CLI session and ask:
+
+```text
+Tell me about your superpowers
+```
+
+Or trigger a skill naturally:
+
+```text
+Help me plan this feature
+```
+
+The agent should invoke the brainstorming skill automatically.
+
+## How it works
+
+Gemini CLI loads `gemini-extension.json` to register the extension, which points to `GEMINI.md` as the context file:
+
+```json gemini-extension.json
+{
+  "name": "superpowers",
+  "description": "Core skills library: TDD, debugging, collaboration patterns, and proven techniques",
+  "version": "5.0.6",
+  "contextFileName": "GEMINI.md"
+}
+```
+
+`GEMINI.md` provides Gemini with the bootstrap context and tool mapping so skills written for Claude Code work correctly in Gemini CLI.
+
+## Skills in Gemini CLI
+
+Skills activate via the `activate_skill` tool. Gemini loads skill metadata (name and description) at session start and activates full skill content on demand.
+
+Tool names map automatically via `GEMINI.md`:
+
+| Claude Code tool | Gemini CLI equivalent |
+|-----------------|----------------------|
+| `Skill` | `activate_skill` |
+| `TodoWrite` | Gemini's task tracking |
+| `Task` (subagents) | Gemini's agent dispatch |
+
+## Updating
+
+```bash
+gemini extensions update superpowers
+```
+
+<Note>
+  Run the update command to pull the latest skills. Gemini CLI does not auto-update extensions on launch.
+</Note>

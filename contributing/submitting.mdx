@@ -1,0 +1,129 @@
+---
+title: "Submitting a Skill"
+description: "Contribute a new skill to the Superpowers project via pull request."
+---
+
+## Overview
+
+Skills live directly in the Superpowers repository. Contributing one back means it becomes available to every user who installs the plugin — automatically, with no extra setup required on their end.
+
+Before submitting, your skill must be written following the `writing-skills` skill and tested using the methodology in [Testing Skills](/contributing/testing-skills). Untested skills that don't hold up under pressure will be asked to revise before merging.
+
+## Contribution steps
+
+<Steps>
+  <Step title="Fork the repository">
+    Fork [github.com/obra/superpowers](https://github.com/obra/superpowers) on GitHub, then clone your fork locally:
+
+    ```bash
+    git clone https://github.com/YOUR-USERNAME/superpowers.git
+    cd superpowers
+    ```
+  </Step>
+
+  <Step title="Create a branch for your skill">
+    Use a descriptive branch name that matches your skill's directory name:
+
+    ```bash
+    git checkout -b skill/my-skill-name
+    ```
+  </Step>
+
+  <Step title="Write the skill following the writing-skills guide">
+    Create a directory for your skill under `skills/`:
+
+    ```bash
+    mkdir skills/my-skill-name
+    ```
+
+    Then create `skills/my-skill-name/SKILL.md` with valid YAML frontmatter and a Markdown body. Follow the complete process in [Writing Skills](/contributing/writing-skills), including the TDD methodology:
+
+    1. Run baseline scenarios without the skill (RED)
+    2. Write the skill addressing those specific failures (GREEN)
+    3. Close loopholes discovered in testing (REFACTOR)
+
+    If your skill needs supporting reference files, place them in the same directory.
+  </Step>
+
+  <Step title="Test your skill">
+    Run pressure scenarios with a subagent to verify the skill triggers at the right time and holds up under pressure. See [Testing Skills](/contributing/testing-skills) for the complete methodology.
+
+    Document the rationalizations you encountered and how you addressed them — reviewers will look for evidence of testing.
+  </Step>
+
+  <Step title="Submit a pull request">
+    Push your branch and open a PR against the main Superpowers repository:
+
+    ```bash
+    git add skills/my-skill-name/
+    git commit -m "Add my-skill-name skill"
+    git push origin skill/my-skill-name
+    ```
+
+    Then open a PR on GitHub with a description that explains:
+    - What the skill does and when it triggers
+    - What baseline failures you observed before writing it
+    - How you tested it and what pressure scenarios you used
+  </Step>
+</Steps>
+
+## PR checklist
+
+Before submitting, verify each of the following:
+
+**Frontmatter:**
+- [ ] `name` field matches the directory name exactly
+- [ ] `name` uses only letters, numbers, and hyphens (no parentheses or special characters)
+- [ ] `description` starts with "Use when..." and describes only triggering conditions — no workflow summary
+- [ ] `description` is written in third person
+- [ ] Both fields are present and within character limits (name: 64 chars, description: 1024 chars)
+
+**Content:**
+- [ ] Skill is tested with pressure scenarios using the RED-GREEN-REFACTOR cycle
+- [ ] Baseline failures are documented and addressed in the skill body
+- [ ] No placeholder text, TBDs, or incomplete sections
+- [ ] Consistent terminology throughout
+- [ ] Examples are concrete, not abstract
+
+**Organization:**
+- [ ] Supporting reference files (if any) are in the skill directory
+- [ ] File references from SKILL.md are one level deep — no nested reference chains
+- [ ] File names are descriptive
+- [ ] No Windows-style backslash paths
+
+**Scope:**
+- [ ] Skill is broadly useful across projects (project-specific conventions belong in `CLAUDE.md`)
+- [ ] Skill teaches something not intuitively obvious or not documented elsewhere
+
+## Code of Conduct
+
+All contributors are expected to follow the [Contributor Covenant Code of Conduct](https://github.com/obra/superpowers/blob/main/CODE_OF_CONDUCT.md). The short version:
+
+- Demonstrate empathy and kindness toward other people
+- Be respectful of differing opinions, viewpoints, and experience levels
+- Give and gracefully accept constructive feedback
+- Focus on what is best for the community
+
+Unacceptable behavior includes harassment, trolling, personal attacks, and publishing others' private information. Violations can be reported to jesse@primeradiant.com.
+
+## Sharing without a PR
+
+Not every skill needs to be in the main repository. You can share skills through the Superpowers Marketplace at [github.com/obra/superpowers-marketplace](https://github.com/obra/superpowers-marketplace) — a community registry for skills that are useful but outside the core library's scope.
+
+The marketplace is also a good place to publish skills that are specific to a particular tool, framework, or workflow before deciding whether to propose them for the main library.
+
+## Getting help
+
+If you're unsure whether a skill is ready to submit, or want feedback before opening a PR:
+
+- **Discord:** [discord.gg/Jd8Vphy9jq](https://discord.gg/Jd8Vphy9jq) — the community is active and happy to review drafts
+- **GitHub Issues:** [github.com/obra/superpowers/issues](https://github.com/obra/superpowers/issues) — open an issue to discuss a proposed skill before writing it
+
+<CardGroup cols={2}>
+  <Card title="Writing Skills" icon="pen-tool" href="/contributing/writing-skills">
+    How to write a skill from scratch
+  </Card>
+  <Card title="Testing Skills" icon="flask" href="/contributing/testing-skills">
+    Verify your skill before submitting
+  </Card>
+</CardGroup>

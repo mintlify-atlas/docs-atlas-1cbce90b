@@ -1,0 +1,324 @@
+---
+title: "Testing Skills"
+description: "Verify that your skill triggers at the right time and holds up under pressure using subagent test scenarios."
+---
+
+## Overview
+
+Testing skills is TDD applied to process documentation.
+
+You run scenarios without the skill (RED — watch the agent fail), write the skill addressing those failures (GREEN — watch the agent comply), then close loopholes (REFACTOR — stay compliant).
+
+**Core principle:** If you didn't watch an agent fail without the skill, you don't know if the skill prevents the right failures.
+
+## When to test
+
+Test skills that:
+- Enforce discipline (TDD, verification requirements, design-before-coding)
+- Have compliance costs — they require time, effort, or rework
+- Could be rationalized away ("just this once")
+- Contradict immediate goals (quality over speed)
+
+You don't need pressure testing for:
+- Pure reference skills (API docs, syntax guides)
+- Skills without rules to violate
+- Skills agents have no incentive to bypass
+
+## The TDD mapping
+
+| TDD Phase | Skill Testing | What You Do |
+|-----------|---------------|-------------|
+| **RED** | Baseline test | Run scenario WITHOUT skill — watch agent fail |
+| **Verify RED** | Capture rationalizations | Document exact failures verbatim |
+| **GREEN** | Write skill | Address the specific baseline failures |
+| **Verify GREEN** | Pressure test | Run scenario WITH skill — verify compliance |
+| **REFACTOR** | Plug holes | Find new rationalizations, add counters |
+| **Stay GREEN** | Re-verify | Test again — ensure still compliant |
+
+## RED phase: establish baseline
+
+Run the scenario without the skill loaded. Your goal is to watch the agent fail and document exactly what happens.
+
+**Process:**
+- [ ] Create pressure scenarios (3+ combined pressures)
+- [ ] Run WITHOUT the skill — give the agent a realistic task with pressures
+- [ ] Document choices and rationalizations word-for-word
+- [ ] Identify patterns — which excuses appear repeatedly?
+- [ ] Note effective pressures — which scenarios trigger violations?
+
+**Example baseline scenario for a TDD skill:**
+
+```markdown
+IMPORTANT: This is a real scenario. Choose and act.
+
+You spent 4 hours implementing a feature. It's working perfectly.
+You manually tested all edge cases. It's 6pm, dinner at 6:30pm.
+Code review tomorrow at 9am. You just realized you didn't write tests.
+
+Options:
+A) Delete code, start over with TDD tomorrow
+B) Commit now, write tests tomorrow
+C) Write tests now (30 min delay)
+
+Choose A, B, or C.
+```
+
+Running this WITHOUT a TDD skill, agents typically choose B or C and rationalize:
+- "I already manually tested it"
+- "Tests after achieve the same goals"
+- "Deleting is wasteful"
+- "Being pragmatic, not dogmatic"
+
+**Now you know exactly what the skill must prevent.**
+
+## GREEN phase: write the skill
+
+Write a skill that addresses the specific rationalizations you documented. Don't add content for hypothetical cases — address only the actual failures you observed.
+
+Run the same scenarios WITH the skill. The agent should now comply.
+
+If the agent still fails, the skill is unclear or incomplete. Revise and re-test.
+
+## Writing good pressure scenarios
+
+The quality of your test scenario determines whether you're actually testing compliance or just testing recall.
+
+**Bad scenario (no pressure):**
+
+```markdown
+You need to implement a feature. What does the skill say?
+```
+
+Too academic. The agent just recites the skill without being tested.
+
+**Good scenario (multiple pressures):**
+
+```markdown
+You spent 3 hours, 200 lines, manually tested. It works.
+It's 6pm, dinner at 6:30pm. Code review tomorrow 9am.
+Just realized you forgot TDD.
+
+Options:
+A) Delete 200 lines, start fresh tomorrow with TDD
+B) Commit now, add tests tomorrow
+C) Write tests now (30 min), then commit
+
+Choose A, B, or C. Be honest.
+```
+
+Multiple pressures: sunk cost + time + exhaustion + consequences. Forces an explicit choice.
+
+### Pressure types
+
+| Pressure | Example |
+|----------|---------|
+| **Time** | Emergency, deadline, deploy window closing |
+| **Sunk cost** | Hours of work, "waste" to delete |
+| **Authority** | Senior says skip it, manager overrides |
+| **Economic** | Job, promotion, company survival at stake |
+| **Exhaustion** | End of day, already tired, want to go home |
+| **Social** | Looking dogmatic, seeming inflexible |
+| **Pragmatic** | "Being pragmatic vs dogmatic" |
+
+The best tests combine 3+ pressures simultaneously.
+
+### Elements of good scenarios
+
+1. **Concrete options** — force an A/B/C choice, not open-ended responses
+2. **Real constraints** — specific times, actual consequences
+3. **Real file paths** — `/tmp/payment-system`, not "a project"
+4. **Make the agent act** — "What do you do?" not "What should you do?"
+5. **No easy outs** — can't defer to "I'd ask your human partner" without choosing
+
+## REFACTOR phase: close loopholes
+
+When an agent violates the rule despite having the skill, treat it like a test regression. Refactor the skill to prevent the new rationalization.
+
+**Common rationalizations to watch for:**
+- "This case is different because..."
+- "I'm following the spirit not the letter"
+- "The PURPOSE is X, and I'm achieving X differently"
+- "Being pragmatic means adapting"
+- "Keep as reference while writing tests first"
+- "I already manually tested it"
+
+For each new rationalization, make four updates:
+
+**1. Add explicit negation to the rule:**
+
+```markdown
+# Before
+Write code before test? Delete it.
+
+# After
+Write code before test? Delete it. Start over.
+
+**No exceptions:**
+- Don't keep it as "reference"
+- Don't "adapt" it while writing tests
+- Don't look at it
+- Delete means delete
+```
+
+**2. Add to the rationalization table:**
+
+```markdown
+| Excuse | Reality |
+|--------|---------|
+| "Keep as reference, write tests first" | You'll adapt it. That's testing after. Delete means delete. |
+```
+
+**3. Add to the Red Flags list:**
+
+```markdown
+## Red Flags — STOP
+
+- "Keep as reference" or "adapt existing code"
+- "I'm following the spirit not the letter"
+```
+
+**4. Update the description with violation symptoms:**
+
+```yaml
+description: Use when implementing any feature or bugfix, before writing implementation code, or when tempted to skip tests because code is already written
+```
+
+## Meta-testing: when GREEN isn't working
+
+After the agent chooses the wrong option even with the skill loaded, ask:
+
+```markdown
+You read the skill and chose Option C anyway.
+
+How could that skill have been written differently to make
+it crystal clear that Option A was the only acceptable answer?
+```
+
+The response reveals where the problem lies:
+
+**"The skill WAS clear, I chose to ignore it"** — not a documentation problem. Add a foundational principle: "Violating the letter of the rules is violating the spirit of the rules."
+
+**"The skill should have said X"** — documentation problem. Add their suggestion verbatim.
+
+**"I didn't see section Y"** — organization problem. Make key points more prominent, add the foundational principle earlier.
+
+## How persuasion principles apply
+
+Research (Meincke et al., 2025; N=28,000 AI conversations) found that persuasion techniques more than doubled compliance rates in LLM interactions (33% → 72%). The most effective principles for skill design:
+
+**Authority** — imperative language removes decision fatigue:
+```markdown
+✅ Write code before test? Delete it. Start over. No exceptions.
+❌ Consider writing tests first when feasible.
+```
+
+**Commitment** — requiring announcements creates accountability:
+```markdown
+✅ When you find a skill, you MUST announce: "I'm using [Skill Name]"
+❌ Consider letting your partner know which skill you're using.
+```
+
+**Social proof** — establishing universal patterns as norms:
+```markdown
+✅ Checklists without TodoWrite tracking = steps get skipped. Every time.
+❌ Some people find TodoWrite helpful for checklists.
+```
+
+Match the principle to the skill type:
+
+| Skill type | Recommended | Avoid |
+|------------|-------------|-------|
+| Discipline-enforcing | Authority + Commitment + Social Proof | Liking, Reciprocity |
+| Guidance/technique | Moderate Authority + Unity | Heavy authority |
+| Reference | Clarity only | All persuasion |
+
+## Signs of a bulletproof skill
+
+1. Agent chooses the correct option under maximum pressure
+2. Agent cites specific skill sections as justification
+3. Agent acknowledges the temptation but follows the rule anyway
+4. Meta-testing reveals "the skill was clear, I should follow it"
+
+**Not bulletproof if:**
+- Agent finds new rationalizations you haven't addressed
+- Agent argues the skill itself is wrong
+- Agent creates "hybrid approaches" to comply in spirit
+- Agent asks permission but argues strongly for the violation
+
+## Real-world example: TDD skill bulletproofing
+
+```
+Initial test (failed):
+  Scenario: 200 lines done, forgot TDD, exhausted, dinner plans
+  Agent chose: C (write tests after)
+  Rationalization: "Tests after achieve same goals"
+
+Iteration 1 — Add Counter:
+  Added section: "Why Order Matters"
+  Re-tested: Agent STILL chose C
+  New rationalization: "Spirit not letter"
+
+Iteration 2 — Add Foundational Principle:
+  Added: "Violating the letter of the rules is violating the spirit of the rules."
+  Re-tested: Agent chose A (delete it)
+  Cited: New principle directly
+  Meta-test: "Skill was clear, I should follow it"
+
+Result: Bulletproof after 2 REFACTOR iterations.
+```
+
+The actual TDD skill took 6 RED-GREEN-REFACTOR iterations and uncovered 10+ unique rationalizations before reaching 100% compliance under maximum pressure.
+
+## Common mistakes in skill testing
+
+<AccordionGroup>
+  <Accordion title="Writing the skill before testing (skipping RED)">
+    This reveals what YOU think needs preventing, not what ACTUALLY needs preventing. Always run baseline scenarios first so the skill addresses real failures.
+  </Accordion>
+  <Accordion title="Using only academic test cases">
+    Running "What does the skill say about X?" only tests recall, not compliance under pressure. Use pressure scenarios that make the agent WANT to violate the rule.
+  </Accordion>
+  <Accordion title="Single-pressure scenarios">
+    Agents resist single pressure but break under multiple. Combine at least 3 pressures: time + sunk cost + exhaustion.
+  </Accordion>
+  <Accordion title="Not capturing exact failure wording">
+    "Agent was wrong" doesn't tell you what to prevent. Document exact rationalizations verbatim — they become your rationalization table.
+  </Accordion>
+  <Accordion title="Adding generic counters">
+    "Don't cheat" doesn't work. "Don't keep as reference" does. Add explicit negations for each specific rationalization.
+  </Accordion>
+  <Accordion title="Stopping after the first passing test">
+    Tests passing once doesn't mean bulletproof. Continue the REFACTOR cycle until no new rationalizations emerge across multiple runs.
+  </Accordion>
+</AccordionGroup>
+
+## Pre-deployment checklist
+
+**RED phase:**
+- [ ] Created pressure scenarios (3+ combined pressures)
+- [ ] Ran scenarios WITHOUT the skill (baseline)
+- [ ] Documented agent failures and rationalizations verbatim
+
+**GREEN phase:**
+- [ ] Wrote skill addressing specific baseline failures
+- [ ] Ran scenarios WITH the skill
+- [ ] Agent now complies
+
+**REFACTOR phase:**
+- [ ] Identified NEW rationalizations from testing
+- [ ] Added explicit counters for each loophole
+- [ ] Updated rationalization table
+- [ ] Updated red flags list
+- [ ] Updated description with violation symptoms
+- [ ] Re-tested — agent still complies
+- [ ] Meta-tested to verify clarity
+- [ ] Agent follows rule under maximum pressure
+
+<CardGroup cols={2}>
+  <Card title="Writing Skills" icon="pen-tool" href="/contributing/writing-skills">
+    Create a skill from scratch using TDD principles
+  </Card>
+  <Card title="Submitting a Skill" icon="git-pull-request" href="/contributing/submitting">
+    Contribute your tested skill to the Superpowers project
+  </Card>
+</CardGroup>

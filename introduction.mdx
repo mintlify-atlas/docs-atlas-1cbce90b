@@ -1,0 +1,79 @@
+---
+title: "Introduction"
+description: "Superpowers is an agentic skills framework that gives coding agents a structured software development methodology — brainstorming, planning, TDD, debugging, and code review — that activates automatically."
+---
+
+Superpowers is a complete software development workflow for coding agents. Instead of jumping straight into code, your agent steps back, understands what you're building, produces a validated design, writes a detailed implementation plan, and executes it with strict TDD and two-stage review.
+
+Skills activate automatically based on context. You don't change how you work — you just get a more disciplined agent.
+
+<CardGroup cols={2}>
+  <Card title="Installation" icon="download" href="/installation">
+    Install Superpowers on Claude Code, Cursor, OpenCode, Codex, or Gemini CLI.
+  </Card>
+  <Card title="Quickstart" icon="rocket" href="/quickstart">
+    See skills in action and trigger your first workflow.
+  </Card>
+</CardGroup>
+
+## What Superpowers is
+
+Superpowers is a set of composable "skills" — structured workflows stored as markdown files — paired with bootstrap instructions that ensure your agent uses them at the right moment.
+
+Each skill is a mandatory workflow, not a suggestion. When a skill applies, the agent must invoke it before responding or taking any action. The `using-superpowers` skill enforces this rule: **if there is even a 1% chance a skill applies, the agent must invoke it.**
+
+Skills are platform-agnostic. The same skill library works across Claude Code, Cursor, OpenCode, Codex, and Gemini CLI.
+
+## The 7-step workflow
+
+Superpowers defines a default development loop that activates in sequence as you work.
+
+<Steps>
+  <Step title="Brainstorming">
+    Before writing any code, the agent asks clarifying questions one at a time, proposes 2–3 design approaches with trade-offs, and presents the design in short sections for your review. The result is a saved spec document you've approved — not assumptions the agent made on its own.
+  </Step>
+  <Step title="Using git worktrees">
+    After you approve the design, the agent creates an isolated workspace on a new branch, runs project setup, and verifies a clean test baseline before any implementation begins. This keeps your main branch safe and your context clean.
+  </Step>
+  <Step title="Writing plans">
+    With the spec approved, the agent produces a detailed implementation plan. Each task is scoped to 2–5 minutes of work and includes exact file paths, complete code, TDD steps, and explicit verification criteria. No placeholders, no "TBDs".
+  </Step>
+  <Step title="Subagent-driven development">
+    The agent dispatches a fresh subagent per task to prevent context drift, then runs a two-stage review — spec compliance first, code quality second — before advancing to the next task. For simpler work, `executing-plans` runs tasks in batches with human checkpoints.
+  </Step>
+  <Step title="Test-driven development">
+    During every implementation task, the agent enforces strict RED-GREEN-REFACTOR: write a failing test, watch it fail, write the minimum code to make it pass, watch it pass, then commit. Code written before a failing test exists gets deleted.
+  </Step>
+  <Step title="Code review">
+    Between tasks, the agent runs a structured code review against the plan, categorizes issues by severity, and blocks progress on critical findings. Receiving code review feedback follows its own workflow to prevent defensive reactions and ensure all issues are addressed.
+  </Step>
+  <Step title="Finishing a development branch">
+    When all tasks are complete, the agent verifies tests, presents options (merge, open a PR, keep the branch, or discard), and cleans up the worktree. Nothing is merged without your explicit sign-off.
+  </Step>
+</Steps>
+
+## Philosophy
+
+Superpowers is built on four principles that appear throughout every skill:
+
+**Test-driven development.** Tests come first, always. A failing test is proof the code does something real. Skipping TDD produces code that appears to work until it doesn't.
+
+**Systematic over ad-hoc.** Every phase of development has a defined process. The agent follows that process rather than improvising. Systematic approaches catch problems that ad-hoc approaches miss.
+
+**Complexity reduction.** Simpler code is always preferred. Skills apply YAGNI (You Aren't Gonna Need It) and DRY (Don't Repeat Yourself) to prevent scope creep and technical debt from accumulating during implementation.
+
+**Evidence over claims.** The agent verifies before declaring success. Saying "this should work" is not the same as running the tests and watching them pass.
+
+## Skill priority system
+
+Superpowers skills override default system prompt behavior, but your instructions always take precedence:
+
+1. **Your explicit instructions** — anything in `CLAUDE.md`, `GEMINI.md`, `AGENTS.md`, or a direct request in the conversation. Highest priority.
+2. **Superpowers skills** — override default agent behavior where they conflict.
+3. **Default system prompt** — lowest priority.
+
+If your `CLAUDE.md` says "don't use TDD" and a skill says "always use TDD", the agent follows your instructions. You remain in control.
+
+<Note>
+  Superpowers ships 14 skills covering testing, debugging, collaboration, subagent orchestration, and meta-skills for writing new skills. See the Skills Reference for the full list.
+</Note>

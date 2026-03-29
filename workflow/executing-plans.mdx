@@ -1,0 +1,160 @@
+---
+title: "Executing plans"
+description: "How Superpowers executes implementation plans — either through fresh subagents with two-stage review or inline with human checkpoints."
+---
+
+Once a plan is written and saved, you choose how it is executed. Superpowers supports two modes: subagent-driven development (recommended) and inline execution. Both enforce TDD and code review, but they differ in how tasks are dispatched and how context is managed.
+
+<Tabs>
+  <Tab title="Subagent-Driven (recommended)">
+
+## Subagent-driven development
+
+The `subagent-driven-development` skill dispatches a fresh subagent per task in the current session. Each subagent gets exactly the context it needs — nothing more. This keeps context clean, prevents confusion between tasks, and enables automatic two-stage review without waiting for human input.
+
+**Core principle:** Fresh subagent per task + two-stage review (spec compliance then code quality) = high quality, fast iteration.
+
+When this mode starts, the agent announces: **"I'm using the subagent-driven-development skill to execute this plan."**
+
+### The per-task loop
+
+<Steps>
+  <Step title="Extract all tasks upfront">
+    Read the plan file once. Extract every task with its full text and context. Create a TodoWrite entry for each task. The agent does not re-read the plan file during execution — all content is already extracted.
+  </Step>
+  <Step title="Dispatch the implementer subagent">
+    Provide the implementer with: the full task text, relevant context from the plan (architecture, tech stack, file structure), and the scene-setting description of where this task fits in the overall feature.
+
+    The implementer gets exactly what it needs. It never reads the plan file itself.
+  </Step>
+  <Step title="Answer implementer questions">
+    If the implementer asks questions before starting, answer them clearly and completely. Do not rush the subagent into implementation. Questions surfaced before work begins are cheaper to answer than ones discovered after.
+  </Step>
+  <Step title="Implementer implements, tests, and self-reviews">
+    The implementer follows TDD for every step: write the failing test, watch it fail, write minimal code, watch it pass, commit. It self-reviews before reporting back. Self-review catches issues before the formal review stages.
+  </Step>
+  <Step title="Spec compliance review">
+    Dispatch a spec reviewer subagent with the task requirements and the git commits produced. The reviewer checks: did the implementation deliver everything in the spec? Did it add anything not requested?
+
+    If issues are found, the implementer (same subagent) fixes them and the spec reviewer reviews again. Repeat until approved. Do not proceed to code quality review until spec compliance is confirmed.
+  </Step>
+  <Step title="Code quality review">
+    Dispatch a code quality reviewer subagent. The reviewer checks: Is the code well-built? Are there magic numbers, missing constants, unclear naming, or unnecessary complexity?
+
+    If issues are found, the implementer fixes them and the reviewer reviews again. Repeat until approved.
+  </Step>
+  <Step title="Mark task complete and move to next">
+    Mark the task as complete in TodoWrite. Proceed to the next task with a fresh subagent. Continue until all tasks are done.
+  </Step>
+  <Step title="Final code review and branch completion">
+    After all tasks, dispatch a final code reviewer subagent over the entire implementation. Then invoke the `finishing-a-development-branch` skill.
+  </Step>
+</Steps>
+
+### Model selection
+
+Use the least powerful model that can handle each role to save cost and increase speed:
+
+| Role | Task complexity signals | Model |
+|------|------------------------|-------|
+| Implementer | 1–2 files, clear spec, mechanical | Cheap/fast model |
+| Implementer | Multi-file, integration concerns | Standard model |
+| Spec reviewer | All tasks | Most capable model |
+| Code quality reviewer | All tasks | Most capable model |
+| Architecture/design judgment | Broad codebase understanding required | Most capable model |
+
+### Handling implementer status codes
+
+Implementers report one of four statuses:
+
+<AccordionGroup>
+  <Accordion title="DONE">
+    Proceed to spec compliance review.
+  </Accordion>
+  <Accordion title="DONE_WITH_CONCERNS">
+    The implementer completed the work but flagged doubts. Read the concerns before proceeding. If they are about correctness or scope, address them before review. If they are observations (e.g., "this file is getting large"), note them and proceed to review.
+  </Accordion>
+  <Accordion title="NEEDS_CONTEXT">
+    The implementer needs information that was not provided. Provide the missing context and re-dispatch. Do not retry with the same instructions.
+  </Accordion>
+  <Accordion title="BLOCKED">
+    The implementer cannot complete the task. Assess the blocker:
+    1. If it is a context problem, provide more context and re-dispatch with the same model
+    2. If the task requires more reasoning, re-dispatch with a more capable model
+    3. If the task is too large, break it into smaller pieces
+    4. If the plan itself is wrong, escalate to the human
+
+    Never ignore an escalation or retry with the same model and same instructions.
+  </Accordion>
+</AccordionGroup>
+
+### Red flags
+
+Never start on `main`/`master` without user consent, skip review stages, proceed with unfixed issues, dispatch multiple implementers in parallel, make a subagent read the plan file directly, accept "close enough" on spec compliance, or start the code quality review before spec compliance passes.
+
+  </Tab>
+
+  <Tab title="Inline Execution">
+
+## Inline execution
+
+The `executing-plans` skill executes the plan in the current session, task by task, with human-in-the-loop checkpoints. Use this on platforms without subagent support, or when you prefer to stay in a single linear session.
+
+<Note>
+  Superpowers works significantly better with subagent support. If your platform supports subagents (Claude Code, Codex), prefer subagent-driven development.
+</Note>
+
+When this mode starts, the agent announces: **"I'm using the executing-plans skill to implement this plan."**
+
+### The process
+
+<Steps>
+  <Step title="Load and review the plan">
+    Read the plan file. Review it critically — identify any questions or concerns. If there are concerns, raise them with the user before starting. If there are no concerns, create a TodoWrite and proceed.
+  </Step>
+  <Step title="Execute tasks in sequence">
+    For each task:
+    1. Mark as in-progress in TodoWrite
+    2. Follow each step exactly as written (the plan has bite-sized steps)
+    3. Run every verification as specified
+    4. Mark as completed
+
+    Do not reorder tasks. Do not skip verifications. Do not guess at ambiguous instructions — stop and ask.
+  </Step>
+  <Step title="Complete development">
+    After all tasks complete and are verified, invoke the `finishing-a-development-branch` skill.
+  </Step>
+</Steps>
+
+### When to stop and ask
+
+Stop executing immediately when:
+- You hit a blocker (missing dependency, test fails, instruction unclear)
+- The plan has a critical gap preventing you from starting a task
+- You do not understand an instruction
+- Verification fails repeatedly
+
+**Ask for clarification rather than guessing.**
+
+### When to revisit the plan
+
+Return to the review step when:
+- The user updates the plan based on your feedback
+- The fundamental approach needs rethinking
+
+Do not force through blockers. Stop and ask.
+
+### Important constraints
+
+Never start on `main`/`master` without consent, follow plan steps exactly without improvising, skip no verifications, and always invoke skills the plan references (e.g., `superpowers:test-driven-development`).
+
+  </Tab>
+</Tabs>
+
+## What comes after execution
+
+Both execution modes end by invoking the `finishing-a-development-branch` skill. A final code reviewer subagent reviews the complete implementation before the branch completion options are presented.
+
+<Card title="Next: Finishing a branch" icon="code-branch" href="/workflow/finishing-a-branch">
+  Verify tests, run a final review, and choose to merge, create a PR, keep the branch, or discard the work.
+</Card>

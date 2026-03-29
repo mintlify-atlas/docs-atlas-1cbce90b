@@ -1,0 +1,262 @@
+---
+title: "Code Review"
+description: "How to request code review, what reviewers check, and how to receive and act on feedback — including the two-stage review process used in subagent-driven development."
+---
+
+## Overview
+
+Code review in Superpowers has two distinct sides: requesting review (dispatching a reviewer subagent with precisely crafted context) and receiving review (evaluating feedback technically, not performing agreement).
+
+Both sides share a core principle: **review early, review often.** Catching issues after each task is cheaper than catching them at merge time.
+
+## Requesting code review
+
+### When to request
+
+**Mandatory:**
+- After each task in subagent-driven development (spec compliance + code quality)
+- After completing a major feature
+- Before merging to main
+
+**Optional but valuable:**
+- When stuck (fresh perspective)
+- Before refactoring (baseline check)
+- After fixing a complex bug
+
+### Pre-review checklist
+
+Before dispatching a reviewer, verify:
+
+- [ ] Implementation is complete (not work in progress)
+- [ ] All tests pass
+- [ ] Self-review done — no obvious gaps
+- [ ] Git SHAs are ready (base SHA and head SHA)
+- [ ] The spec or requirements are available to give the reviewer
+
+### How to request
+
+**1. Get the git SHAs:**
+
+```bash
+BASE_SHA=$(git rev-parse HEAD~1)  # or origin/main for the full branch
+HEAD_SHA=$(git rev-parse HEAD)
+```
+
+**2. Dispatch a code-reviewer subagent** using the Task tool with the `superpowers:code-reviewer` type. Provide:
+- What was implemented
+- What the spec or plan required
+- The base SHA and head SHA
+- A brief description
+
+**3. Act on feedback:**
+- Fix Critical issues immediately
+- Fix Important issues before proceeding
+- Note Minor issues for later
+- Push back with technical reasoning if the reviewer is wrong
+
+### Example
+
+```
+[Just completed Task 2: Add verification function]
+
+BASE_SHA=$(git log --oneline | grep "Task 1" | head -1 | awk '{print $1}')
+HEAD_SHA=$(git rev-parse HEAD)
+
+[Dispatch superpowers:code-reviewer subagent]
+  WHAT_WAS_IMPLEMENTED: Verification and repair functions for conversation index
+  PLAN_OR_REQUIREMENTS: Task 2 from docs/plans/deployment-plan.md
+  BASE_SHA: a7981ec
+  HEAD_SHA: 3df7661
+  DESCRIPTION: Added verifyIndex() and repairIndex() with 4 issue types
+
+[Subagent returns]:
+  Strengths: Clean architecture, real tests
+  Issues:
+    Important: Missing progress indicators
+    Minor: Magic number (100) for reporting interval
+  Assessment: Ready to proceed
+
+[Fix progress indicators, note the magic number]
+[Continue to Task 3]
+```
+
+## The two-stage review in subagent-driven development
+
+In subagent-driven development, every implemented task goes through two sequential reviews before it's marked complete. The order matters: spec compliance first, code quality second. Do not start code quality review while spec compliance has open issues.
+
+### Stage 1: Spec compliance review
+
+The spec compliance reviewer answers one question: **did the implementation build exactly what was asked — nothing more, nothing less?**
+
+What the reviewer checks:
+- Every requirement in the task spec is implemented
+- Nothing extra was added that wasn't requested
+- Edge cases explicitly required are handled
+- Interface matches what the spec described
+
+Outcome:
+- **✅ Spec compliant** — proceed to code quality review
+- **❌ Issues found** — implementer fixes → spec reviewer re-reviews → repeat until approved
+
+### Stage 2: Code quality review
+
+The code quality reviewer answers: **is the implementation well-built?**
+
+What the reviewer checks:
+- Naming: are names clear and descriptive?
+- Structure: is the code organized sensibly?
+- Test coverage: are behaviors covered, edge cases handled?
+- Patterns: does it follow the project's conventions?
+- No obvious code smells (magic numbers, deeply nested logic, duplicated logic)
+
+Outcome:
+- **✅ Approved** — mark task complete
+- **❌ Issues found** — implementer fixes → code reviewer re-reviews → repeat until approved
+
+### Review loop
+
+Reviewer finds issues → implementer (same subagent) fixes → reviewer reviews again → repeat until approved → move on.
+
+Never skip the re-review. "Close enough" is not approved.
+
+## Receiving code review
+
+### The response pattern
+
+```
+1. READ:      Complete feedback without reacting
+2. UNDERSTAND: Restate the requirement in your own words (or ask)
+3. VERIFY:    Check against codebase reality
+4. EVALUATE:  Is this technically sound for THIS codebase?
+5. RESPOND:   Technical acknowledgment or reasoned pushback
+6. IMPLEMENT: One item at a time, test each
+```
+
+### Handling unclear feedback
+
+If any item is unclear, stop — do not implement anything yet. Ask for clarification on the unclear items. Items may be related; partial understanding leads to wrong implementation.
+
+```
+your human partner: "Fix items 1-6"
+
+You understand 1, 2, 3, 6. Unclear on 4, 5.
+
+WRONG: Implement 1, 2, 3, 6 now, ask about 4, 5 later
+RIGHT: "I understand items 1, 2, 3, 6. Need clarification on 4 and 5 before proceeding."
+```
+
+### From your human partner
+
+- Trusted — implement after understanding
+- Still ask if scope is unclear
+- Skip to action or a brief technical acknowledgment — no performative agreement
+
+### From external reviewers
+
+Before implementing any suggestion from an external reviewer, check:
+1. Is it technically correct for THIS codebase?
+2. Does it break existing functionality?
+3. Is there a reason for the current implementation?
+4. Does it work on all platforms and versions?
+5. Does the reviewer understand the full context?
+
+If the suggestion seems wrong: push back with technical reasoning.
+If you can't easily verify: say so — "I can't verify this without X. Should I investigate or proceed?"
+If it conflicts with your human partner's prior decisions: discuss with your human partner first.
+
+### YAGNI check for "professional" features
+
+If a reviewer suggests implementing a feature "properly" (database, date filters, export formats, etc.):
+
+```bash
+# Check if the endpoint is actually used
+grep -r "endpoint_name" src/
+```
+
+If unused: "This endpoint isn't called. Remove it (YAGNI)?" If used: implement properly.
+
+### Acknowledging correct feedback
+
+```
+✅ "Fixed. [Brief description of what changed]"
+✅ "Good catch — [specific issue]. Fixed in [location]."
+✅ [Just fix it and show in the code]
+
+❌ "You're absolutely right!"
+❌ "Great point!"
+❌ "Thanks for catching that!"
+❌ Any gratitude expression
+```
+
+Actions speak. Fix the code. The code itself shows you heard the feedback.
+
+### When to push back
+
+Push back when:
+- Suggestion breaks existing functionality
+- Reviewer lacks full context
+- Violates YAGNI (unused feature)
+- Technically incorrect for this stack
+- Legacy or compatibility reasons exist
+- Conflicts with your human partner's architectural decisions
+
+How to push back: use technical reasoning, not defensiveness. Ask specific questions. Reference working tests or code.
+
+**Example:**
+
+```
+Reviewer: "Remove legacy code"
+
+WRONG: "You're absolutely right! Let me remove that..."
+
+RIGHT: "Checking... build target is 10.15+, this API requires 13+.
+  Need legacy code for backward compat. Current impl has wrong bundle ID —
+  fix it or drop pre-13 support?"
+```
+
+### If you pushed back and were wrong
+
+```
+✅ "You were right — I checked [X] and it does [Y]. Implementing now."
+✅ "Verified this and you're correct. My initial understanding was wrong
+    because [reason]. Fixing."
+
+❌ Long apology
+❌ Defending why you pushed back
+❌ Over-explaining
+```
+
+State the correction factually and move on.
+
+### Implementation order for multi-item feedback
+
+1. Clarify anything unclear first
+2. Implement in this order:
+   - Blocking issues (breaks, security)
+   - Simple fixes (typos, imports)
+   - Complex fixes (refactoring, logic)
+3. Test each fix individually
+4. Verify no regressions
+
+## Common mistakes
+
+| Mistake | Fix |
+|---------|-----|
+| Performative agreement | State the requirement or just act |
+| Blind implementation | Verify against the codebase first |
+| Batch without testing | One item at a time, test each |
+| Assuming reviewer is right | Check if it breaks things |
+| Avoiding pushback | Technical correctness > comfort |
+| Partial implementation | Clarify all items first |
+| Can't verify, proceed anyway | State the limitation, ask for direction |
+
+## Red flags
+
+**Never:**
+- Skip review because "it's simple"
+- Ignore Critical issues
+- Proceed with unfixed Important issues
+- Argue with valid technical feedback without reasoning
+- Say "You're absolutely right!" — it's performative, not technical
+
+**External feedback = suggestions to evaluate, not orders to follow.** Verify. Question. Then implement.

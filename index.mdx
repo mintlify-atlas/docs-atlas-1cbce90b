@@ -1,97 +1,83 @@
 ---
-title: "Introduction"
-description: "Welcome to the new home for your documentation"
+title: "Superpowers"
+description: "A skills framework that gives your coding agent a structured software development methodology — design, planning, TDD, debugging, and code review — that triggers automatically."
 ---
 
-## Setting up
+Superpowers is a complete software development workflow for coding agents. Instead of jumping straight into code, your agent steps back, understands what you're building, produces a validated design, writes a detailed implementation plan, and executes it with strict TDD and two-stage review — all through composable skills that activate automatically.
 
-Get your documentation site up and running in minutes.
-
-<Card
-  title="Start here"
-  icon="rocket"
-  href="/quickstart"
-  horizontal
->
-  Follow our three step quickstart guide.
-</Card>
-
-## Make it yours
-
-Design a docs site that looks great and empowers your users.
-
-<Columns cols={2}>
-  <Card
-    title="Edit locally"
-    icon="pen-to-square"
-    href="/development"
-  >
-    Edit your docs locally and preview them in real time.
+<CardGroup cols={2}>
+  <Card title="Installation" icon="download" href="/installation">
+    Install Superpowers on Claude Code, Cursor, OpenCode, Codex, or Gemini CLI in one step.
   </Card>
-  <Card
-    title="Customize your site"
-    icon="palette"
-    href="/essentials/settings"
-  >
-    Customize the design and colors of your site to match your brand.
+  <Card title="Quickstart" icon="rocket" href="/quickstart">
+    Get your agent running with Superpowers in under five minutes.
   </Card>
-    <Card
-    title="Set up navigation"
-    icon="map"
-    href="/essentials/navigation"
-  >
-    Organize your docs to help users find what they need and succeed with your product.
+  <Card title="The Workflow" icon="diagram-project" href="/workflow/overview">
+    Understand the seven-step agentic development loop from idea to merged branch.
   </Card>
-  <Card
-    title="API documentation"
-    icon="terminal"
-    href="/api-reference/introduction"
-  >
-    Auto-generate API documentation from OpenAPI specifications.
+  <Card title="Skills Reference" icon="book-open" href="/skills/test-driven-development">
+    Explore every skill: TDD, debugging, subagent orchestration, code review, and more.
   </Card>
-</Columns>
+</CardGroup>
 
-## Create beautiful pages
+## How it works
 
-Everything you need to create world-class documentation.
+When you fire up your coding agent, Superpowers' skills activate at exactly the right moment in your workflow. The agent doesn't guess — it follows a proven process.
 
-<Columns cols={2}>
-  <Card
-    title="Write with MDX"
-    icon="pen-fancy"
-    href="/essentials/markdown"
-  >
-    Use MDX to style your docs pages.
-  </Card>
-  <Card
-    title="Code samples"
-    icon="code"
-    href="/essentials/code"
-  >
-    Add sample code to demonstrate how to use your product.
-  </Card>
-  <Card
-    title="Images"
-    icon="image"
-    href="/essentials/images"
-  >
-    Display images and other media.
-  </Card>
-  <Card
-    title="Reusable snippets"
-    icon="recycle"
-    href="/essentials/reusable-snippets"
-  >
-    Write once and reuse across your docs.
-  </Card>
-</Columns>
+<Steps>
+  <Step title="Brainstorm your idea">
+    The agent asks clarifying questions one at a time, proposes 2–3 approaches with trade-offs, presents the design in sections for your approval, and writes a validated spec document before a single line of code is touched.
+  </Step>
+  <Step title="Write a detailed plan">
+    With your spec approved, the agent breaks the work into bite-sized tasks (2–5 minutes each) with exact file paths, complete code, and TDD steps. No placeholders, no "TBDs".
+  </Step>
+  <Step title="Execute with subagents">
+    The agent dispatches a fresh subagent per task to keep context clean, then runs a two-stage review — spec compliance first, code quality second — before moving on.
+  </Step>
+  <Step title="Finish the branch">
+    When all tasks are complete, the agent verifies tests, runs a final code review, and walks you through merge, PR, or discard options — cleaning up the worktree along the way.
+  </Step>
+</Steps>
 
-## Need inspiration?
+## The skills library
 
-<Card
-  title="See complete examples"
-  icon="stars"
-  href="https://mintlify.com/customers"
->
-  Browse our showcase of exceptional documentation sites.
-</Card>
+Superpowers ships 14 skills that cover the full development lifecycle.
+
+<CardGroup cols={2}>
+  <Card title="Test-Driven Development" icon="vial" href="/skills/test-driven-development">
+    Strict RED-GREEN-REFACTOR enforcement. Code written before a failing test gets deleted.
+  </Card>
+  <Card title="Systematic Debugging" icon="bug" href="/skills/systematic-debugging">
+    4-phase root cause investigation. No fixes allowed without understanding why.
+  </Card>
+  <Card title="Subagent-Driven Development" icon="microchip" href="/skills/subagent-driven-development">
+    Fresh subagent per task with two-stage review for fast, high-quality iteration.
+  </Card>
+  <Card title="Code Review" icon="magnifying-glass-code" href="/skills/code-review">
+    Pre-review checklist and structured response workflow for requesting and receiving feedback.
+  </Card>
+</CardGroup>
+
+## Platform support
+
+<CardGroup cols={3}>
+  <Card title="Claude Code" icon="robot" href="/platforms/claude-code">
+    Install from the official Claude plugin marketplace.
+  </Card>
+  <Card title="Cursor" icon="arrow-pointer" href="/platforms/cursor">
+    One-command install via the Cursor plugin marketplace.
+  </Card>
+  <Card title="OpenCode" icon="terminal" href="/platforms/opencode">
+    Add to your opencode.json and restart — auto-installs via Bun.
+  </Card>
+  <Card title="Codex" icon="code" href="/platforms/codex">
+    Fetch and follow the install instructions from GitHub.
+  </Card>
+  <Card title="Gemini CLI" icon="gem" href="/platforms/gemini-cli">
+    Install with a single gemini extensions command.
+  </Card>
+</CardGroup>
+
+<Note>
+  Skills trigger automatically based on what you're doing. You don't need to remember to invoke them — if there's even a 1% chance a skill applies, your agent will check it.
+</Note>

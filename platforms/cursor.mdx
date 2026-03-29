@@ -1,0 +1,50 @@
+---
+title: "Cursor"
+description: "Install Superpowers on Cursor via the plugin marketplace in Cursor Agent chat."
+---
+
+Superpowers integrates with Cursor through its plugin marketplace. Install from Cursor Agent chat with a single command.
+
+## Installation
+
+In Cursor Agent chat, run:
+
+```text
+/add-plugin superpowers
+```
+
+Or search for **superpowers** in the Cursor plugin marketplace UI.
+
+## Verify installation
+
+Start a new Agent chat session and ask:
+
+```text
+Help me plan this feature
+```
+
+or
+
+```text
+Tell me about your superpowers
+```
+
+The agent should invoke the brainstorming skill automatically.
+
+## How skills work in Cursor
+
+Superpowers uses Cursor's plugin system to register skills. The `using-superpowers` skill sets the rule that any applicable skill must be invoked before responding.
+
+Cursor uses `hooks-cursor.json` for Cursor-specific hook configuration, enabling session-start skill bootstrapping.
+
+## Updating
+
+Skills update automatically when the Cursor plugin updates. To force an update, reinstall via:
+
+```text
+/add-plugin superpowers
+```
+
+<Note>
+  Cursor's subagent support may differ from Claude Code. Skills that use `Task` for subagent dispatch adapt to Cursor's available agent tools.
+</Note>

@@ -1,0 +1,176 @@
+---
+title: "Finishing a branch"
+description: "How Superpowers verifies, reviews, and completes implementation work — merging, creating a PR, keeping, or discarding the branch."
+---
+
+The `finishing-a-development-branch` skill runs when all implementation tasks are complete. It verifies tests, runs a final review over the full implementation, and presents four structured options for what to do with the work.
+
+When this skill starts, the agent announces: **"I'm using the finishing-a-development-branch skill to complete this work."**
+
+**Core principle:** Verify tests → present options → execute choice → clean up.
+
+## Step 1: Verify tests
+
+Before presenting any options, the agent runs the full test suite:
+
+```bash
+# Use the project-appropriate command
+npm test
+cargo test
+pytest
+go test ./...
+```
+
+If tests fail, the agent reports the failures and stops:
+
+```
+Tests failing (N failures). Must fix before completing:
+
+[failures listed here]
+
+Cannot proceed with merge/PR until tests pass.
+```
+
+The agent does not present completion options until tests pass.
+
+## Step 2: Determine the base branch
+
+```bash
+git merge-base HEAD main 2>/dev/null || git merge-base HEAD master 2>/dev/null
+```
+
+If the base branch is ambiguous, the agent asks.
+
+## Step 3: Final code review
+
+Before presenting options, a final code reviewer subagent inspects the entire implementation — all commits since the branch diverged from the base. This review looks at the whole picture, not individual tasks.
+
+## Step 4: Choose what to do
+
+The agent presents exactly four options:
+
+```
+Implementation complete. What would you like to do?
+
+1. Merge back to <base-branch> locally
+2. Push and create a Pull Request
+3. Keep the branch as-is (I'll handle it later)
+4. Discard this work
+
+Which option?
+```
+
+<Tabs>
+  <Tab title="1. Merge locally">
+
+```bash
+# Switch to base branch
+git checkout <base-branch>
+
+# Pull latest
+git pull
+
+# Merge feature branch
+git merge <feature-branch>
+
+# Verify tests on merged result
+<test command>
+
+# If tests pass, delete feature branch
+git branch -d <feature-branch>
+```
+
+Tests are verified again on the merged result. The worktree is cleaned up after the merge.
+
+  </Tab>
+  <Tab title="2. Push and create PR">
+
+```bash
+# Push branch
+git push -u origin <feature-branch>
+
+# Create PR
+gh pr create --title "<title>" --body "$(cat <<'EOF'
+## Summary
+<2-3 bullets of what changed>
+
+## Test Plan
+- [ ] <verification steps>
+EOF
+)"
+```
+
+The worktree is cleaned up after the PR is created. The branch itself is preserved.
+
+  </Tab>
+  <Tab title="3. Keep as-is">
+
+```
+Keeping branch <name>. Worktree preserved at <path>.
+```
+
+The worktree is not cleaned up. Use this when you want to continue work later or inspect the state manually.
+
+  </Tab>
+  <Tab title="4. Discard">
+
+Before deleting anything, the agent shows exactly what will be lost and requires typed confirmation:
+
+```
+This will permanently delete:
+- Branch <name>
+- All commits: <commit-list>
+- Worktree at <path>
+
+Type 'discard' to confirm.
+```
+
+Only after receiving the exact word `discard` does the agent proceed:
+
+```bash
+git checkout <base-branch>
+git branch -D <feature-branch>
+```
+
+The worktree is cleaned up after deletion.
+
+<Warning>
+  This is permanent. The agent will not proceed without the typed `discard` confirmation.
+</Warning>
+
+  </Tab>
+</Tabs>
+
+## Worktree cleanup
+
+| Option | Merge | Push | Worktree removed | Branch deleted |
+|--------|-------|------|-----------------|----------------|
+| 1. Merge locally | Yes | — | Yes | Yes |
+| 2. Create PR | — | Yes | Yes | — |
+| 3. Keep as-is | — | — | — | — |
+| 4. Discard | — | — | Yes | Yes (force) |
+
+For options 1, 2, and 4, the agent removes the physical worktree directory:
+
+```bash
+git worktree remove <worktree-path>
+```
+
+For option 3 (keep as-is), the worktree is preserved so you can return to it later.
+
+## Common mistakes
+
+<AccordionGroup>
+  <Accordion title="Skipping test verification">
+    Merging or creating a PR without verifying tests first risks broken code reaching the base branch. The skill always runs the test suite before presenting options — do not skip this step.
+  </Accordion>
+  <Accordion title="Automatic worktree cleanup">
+    The worktree is removed for options 1 (merge), 2 (PR), and 4 (discard). Only option 3 (keep as-is) preserves the worktree directory, since you intend to return to it later.
+  </Accordion>
+  <Accordion title="No confirmation for discard">
+    Discarding without a typed confirmation can permanently delete hours of work. The exact word `discard` is required.
+  </Accordion>
+  <Accordion title="Force-pushing without consent">
+    Never force-push unless the user explicitly requests it. Present the four standard options instead.
+  </Accordion>
+</AccordionGroup>

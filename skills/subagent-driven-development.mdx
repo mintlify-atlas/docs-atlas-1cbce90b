@@ -1,0 +1,204 @@
+---
+title: "Subagent-Driven Development"
+description: "Execute implementation plans by dispatching a fresh subagent per task, with spec compliance review followed by code quality review after each one."
+---
+
+## Overview
+
+Subagent-driven development is how you execute an implementation plan inside a single session without context pollution between tasks. You delegate each task to a fresh subagent with precisely crafted instructions and context. The subagent never inherits your session's history — you construct exactly what it needs. This keeps subagents focused and preserves your own context for coordination.
+
+After each task, two reviewers check the work in sequence: spec compliance first (did it build exactly what was asked, nothing more, nothing less?), then code quality (is it well-built?).
+
+**Core principle:** Fresh subagent per task + two-stage review (spec then quality) = high quality, fast iteration.
+
+## When to use
+
+Use subagent-driven development when you have an implementation plan with tasks that are mostly independent and you want to stay in the current session.
+
+| Situation | Use |
+|-----------|-----|
+| Implementation plan, independent tasks, stay in session | Subagent-driven development |
+| Implementation plan, parallel sessions across worktrees | Executing Plans |
+| No plan yet, or tightly coupled tasks | Manual execution or brainstorm first |
+
+**vs. Executing Plans (parallel sessions):**
+- Same session — no context switch
+- Fresh subagent per task — no context pollution
+- Two-stage review automatic after each task
+- Faster iteration — no human-in-loop between tasks
+
+## The per-task loop
+
+<Steps>
+  <Step title="Read the plan and set up">
+    Read the plan file once. Extract all tasks with their full text and surrounding context. Create a TodoWrite with all tasks. Do not make subagents read the plan file themselves — provide the full task text directly.
+  </Step>
+
+  <Step title="Dispatch the implementer subagent">
+    Dispatch a fresh implementation subagent with the full task text, relevant context, and scene-setting so the subagent understands where this task fits in the larger feature.
+
+    **If the subagent asks questions:**
+    - Answer clearly and completely
+    - Provide additional context if needed
+    - Do not rush them into implementation
+    - Re-dispatch with the answers
+
+    Once questions are resolved, the implementer proceeds to implement, write tests, commit, and self-review.
+  </Step>
+
+  <Step title="Handle the implementer's status">
+    Implementer subagents return one of four statuses:
+
+    **DONE:** Proceed to spec compliance review.
+
+    **DONE_WITH_CONCERNS:** Implementation complete but the subagent flagged doubts. Read the concerns before proceeding. If they're about correctness or scope, address them before review. If they're observations (e.g., "this file is getting large"), note them and proceed.
+
+    **NEEDS_CONTEXT:** The implementer needs information that wasn't provided. Provide the missing context and re-dispatch.
+
+    **BLOCKED:** The implementer cannot complete the task. Assess:
+    1. Context problem → provide more context, re-dispatch with same model
+    2. Task requires more reasoning → re-dispatch with a more capable model
+    3. Task is too large → break into smaller pieces
+    4. Plan itself is wrong → escalate to the human
+
+    Never ignore an escalation or force the same model to retry without changes.
+  </Step>
+
+  <Step title="Spec compliance review">
+    Dispatch a spec reviewer subagent. Give it the task spec and the git SHAs for the implementation.
+
+    The spec reviewer checks: did the implementation build exactly what was asked — nothing more, nothing less?
+    - Missing requirements → implementer fixes → re-review
+    - Extra features added → implementer removes → re-review
+    - Spec compliant → proceed to code quality review
+
+    Do not skip to code quality review while spec compliance has open issues.
+  </Step>
+
+  <Step title="Code quality review">
+    Dispatch a code quality reviewer subagent. Give it the implementation and context.
+
+    The code quality reviewer checks: is the implementation well-built?
+    - Naming, structure, test coverage, patterns
+    - Issues found → implementer fixes → re-review
+    - Approved → mark task complete in TodoWrite
+
+    The implementer self-review does not replace the actual review — both are needed.
+  </Step>
+
+  <Step title="Next task or finish">
+    Move to the next task, repeat the loop.
+
+    After all tasks are complete: dispatch a final code reviewer for the entire implementation, then use the `finishing-a-development-branch` skill to complete the branch.
+  </Step>
+</Steps>
+
+## Model selection
+
+Use the least powerful model that can handle each role to conserve cost and increase speed.
+
+| Task type | Model |
+|-----------|-------|
+| Mechanical implementation: isolated functions, clear spec, 1–2 files | Fast, cheap model |
+| Integration and judgment: multi-file coordination, pattern matching, debugging | Standard model |
+| Architecture, design, and review tasks | Most capable available model |
+
+**Signals:**
+- Touches 1–2 files with complete spec → cheap model
+- Touches multiple files with integration concerns → standard model
+- Requires design judgment or broad codebase understanding → most capable model
+
+## Example workflow
+
+```
+You: I'm using Subagent-Driven Development to execute this plan.
+
+[Read plan file once: docs/plans/feature-plan.md]
+[Extract all 5 tasks with full text and context]
+[Create TodoWrite with all tasks]
+
+Task 1: Hook installation script
+
+[Dispatch implementation subagent with full task text + context]
+
+Implementer: "Before I begin — should the hook be installed at user or system level?"
+
+You: "User level (~/.config/superpowers/hooks/)"
+
+Implementer: [Implements install-hook command, adds tests, 5/5 passing,
+  self-review found missing --force flag and added it, committed]
+
+[Dispatch spec compliance reviewer]
+Spec reviewer: ✅ Spec compliant — all requirements met, nothing extra
+
+[Get git SHAs, dispatch code quality reviewer]
+Code reviewer: Strengths: Good test coverage, clean. Issues: None. Approved.
+
+[Mark Task 1 complete]
+
+Task 2: Recovery modes
+
+[Dispatch implementation subagent with full task text + context]
+
+Implementer: [No questions, adds verify/repair modes, 8/8 tests passing,
+  self-review: all good, committed]
+
+[Dispatch spec compliance reviewer]
+Spec reviewer: ❌ Issues:
+  - Missing: Progress reporting (spec says "report every 100 items")
+  - Extra: Added --json flag (not requested)
+
+[Implementer fixes: removes --json flag, adds progress reporting]
+
+[Spec reviewer reviews again]
+Spec reviewer: ✅ Spec compliant now
+
+[Dispatch code quality reviewer]
+Code reviewer: Issues (Important): Magic number (100) — should be a named constant
+
+[Implementer fixes: extracts PROGRESS_INTERVAL constant]
+
+[Code reviewer reviews again]
+Code reviewer: ✅ Approved
+
+[Mark Task 2 complete]
+
+...
+
+[After all tasks]
+[Dispatch final code reviewer for entire implementation]
+Final reviewer: All requirements met, ready to merge.
+```
+
+## Red flags
+
+**Never:**
+- Start implementation on main/master without explicit user consent
+- Skip spec compliance review OR code quality review
+- Proceed with unfixed issues from either review
+- Dispatch multiple implementation subagents in parallel (they will conflict)
+- Make subagents read the plan file themselves (provide full task text instead)
+- Skip scene-setting context (subagents need to understand where the task fits)
+- Ignore subagent questions (answer before letting them proceed)
+- Accept "close enough" on spec compliance (reviewer found issues = not done)
+- Skip review loops (reviewer found issues = implementer fixes = review again)
+- Let implementer self-review replace actual review
+- Start code quality review before spec compliance is approved
+- Move to next task while either review has open issues
+
+## Integration with other skills
+
+<CardGroup cols={2}>
+  <Card title="Git worktrees" icon="git-branch" href="/skills/git-worktrees">
+    Required before executing any tasks. Set up an isolated workspace so subagents work on a clean branch without touching the main workspace.
+  </Card>
+  <Card title="Code review" icon="check-circle" href="/skills/code-review">
+    The two-stage review process — spec compliance then code quality — is detailed in the code review skill, including reviewer prompt templates.
+  </Card>
+  <Card title="Test-driven development" icon="flask-conical" href="/skills/test-driven-development">
+    Subagents follow TDD for each task — write the failing test first, implement to pass, refactor. The implementer's self-review checks that TDD was followed.
+  </Card>
+  <Card title="Writing Plans" icon="list-checks">
+    Creates the implementation plan that this skill executes. Plans produced by the writing-plans skill are structured so tasks are extractable and independently dispatchable.
+  </Card>
+</CardGroup>

@@ -1,0 +1,225 @@
+---
+title: "Writing Skills"
+description: "Create new Superpowers skills that automatically trigger at the right moment and guide agents through proven workflows."
+---
+
+## What is a skill?
+
+A **skill** is a Markdown reference guide — a `SKILL.md` file with YAML frontmatter — that agents discover and load at runtime. Skills encode proven techniques, patterns, and workflows so that future agent instances can apply them without being told explicitly.
+
+**Skills are:** reusable techniques, patterns, tools, and reference guides.
+
+**Skills are not:** narratives about how you solved a problem once, project-specific conventions (put those in `CLAUDE.md`), or mechanical constraints better enforced by automation.
+
+## Where to put skills
+
+Skills can live in three locations depending on their intended scope:
+
+| Location | Purpose |
+|----------|---------|
+| `~/.config/opencode/skills/<skill-name>/SKILL.md` | Personal skills — available across all your projects |
+| `.opencode/skills/<skill-name>/SKILL.md` | Project skills — checked into the repo, shared with the team |
+| `skills/<skill-name>/SKILL.md` in the Superpowers repo | Published skills — contributed back for everyone |
+
+<Note>
+Claude Code uses `~/.claude/skills/` and Codex uses `~/.agents/skills/`. Each platform has its own personal skill directory — check your platform's documentation.
+</Note>
+
+## YAML frontmatter
+
+Every `SKILL.md` starts with YAML frontmatter containing two required fields:
+
+```yaml
+---
+name: skill-name-with-hyphens
+description: Use when [specific triggering conditions and symptoms]
+---
+```
+
+**`name`** — matches the directory name. Use letters, numbers, and hyphens only. No parentheses or special characters. 64-character maximum.
+
+**`description`** — the most important field. Agents read descriptions from all available skills to decide which ones to load. 1024-character maximum.
+
+## Writing effective descriptions
+
+The description determines when your skill fires automatically. Get this wrong and the skill never triggers — or triggers at the wrong time.
+
+**The format:** Start with "Use when..." and describe only triggering conditions. Never summarize the skill's process or workflow.
+
+<Warning>
+When a description summarizes the workflow, agents may follow the description as a shortcut instead of reading the full skill content. A description that says "dispatches subagent per task with code review between tasks" caused agents to do ONE review, even though the skill flowchart showed TWO. Changing to triggering-conditions-only fixed it.
+</Warning>
+
+```yaml
+# Bad: summarizes workflow — agent may shortcut the skill body
+description: Use when executing plans — dispatches subagent per task with code review between tasks
+
+# Bad: too much process detail
+description: Use for TDD — write test first, watch it fail, write minimal code, refactor
+
+# Good: triggering conditions only, no workflow summary
+description: Use when executing implementation plans with independent tasks in the current session
+
+# Good: triggering conditions with symptom-based language
+description: Use when tests have race conditions, timing dependencies, or pass/fail inconsistently
+```
+
+**Additional description rules:**
+- Write in third person (it's injected into the system prompt)
+- Use concrete triggers, symptoms, and situations
+- Describe the problem, not language-specific symptoms
+- Keep technology-agnostic unless the skill itself is technology-specific
+
+## Skill types
+
+Understanding which type of skill you're writing shapes how you structure it.
+
+**Rigid skills** (like `test-driven-development`) must be followed exactly. The agent does not adapt or abbreviate the process. Use authority language: "YOU MUST", "Never", "No exceptions."
+
+**Flexible skills** (like `brainstorming`) provide principles and patterns the agent adapts to context. Use guidance language that leaves room for judgment.
+
+The skill itself should tell the agent which type it is.
+
+## Minimal skill template
+
+```markdown
+---
+name: skill-name-with-hyphens
+description: Use when [specific triggering conditions and symptoms]
+---
+
+# Skill Name
+
+## Overview
+What is this? Core principle in 1-2 sentences.
+
+## When to Use
+Bullet list with symptoms and use cases.
+When NOT to use.
+
+## Core Pattern
+Before/after comparison or step-by-step process.
+
+## Quick Reference
+Table or bullets for scanning common operations.
+
+## Common Mistakes
+What goes wrong and how to fix it.
+```
+
+## Key writing principles
+
+### Be concise — context window is shared
+
+At startup, only the `name` and `description` from all skills are pre-loaded. The `SKILL.md` body is read on demand. But once loaded, every token competes with conversation history.
+
+Target word counts:
+- Skills loaded at session start: fewer than 150 words
+- Frequently-referenced skills: fewer than 200 words total
+- Other skills: fewer than 500 words
+
+### One excellent example beats many mediocre ones
+
+Choose the most relevant language for the skill's domain. A complete, well-commented example from a real scenario is more useful than five variations of the same pattern.
+
+### Use reference files for heavy content
+
+Keep `SKILL.md` as a focused overview. Move long reference docs (100+ lines) into subdirectory files and link to them from the main skill.
+
+```
+pptx/
+  SKILL.md       # Overview + workflows
+  pptxgenjs.md   # 600-line API reference
+  ooxml.md       # 500-line XML structure
+```
+
+Keep references one level deep — don't create chains where SKILL.md links to `advanced.md` which links to `details.md`. Claude may only partially read nested references.
+
+### Keyword coverage for discovery
+
+Use words an agent would search for:
+- Error messages verbatim: "Hook timed out", "ENOTEMPTY"
+- Symptoms: "flaky", "hanging", "zombie", "pollution"
+- Synonyms: "timeout/hang/freeze", "cleanup/teardown"
+- Actual tool and library names
+
+### Use checklists for multi-step processes
+
+For workflows with multiple steps that must all complete, provide a checklist. Agents can copy it into their response and track progress.
+
+```markdown
+- [ ] Step 1: Analyze the form
+- [ ] Step 2: Create field mapping
+- [ ] Step 3: Validate mapping
+- [ ] Step 4: Apply changes
+- [ ] Step 5: Verify output
+```
+
+### Close every loophole explicitly
+
+Discipline-enforcing skills need to resist rationalization. Don't just state the rule — forbid specific workarounds:
+
+```markdown
+# Too weak
+Write code before test? Delete it.
+
+# Bulletproof
+Write code before test? Delete it. Start over.
+
+**No exceptions:**
+- Don't keep it as "reference"
+- Don't "adapt" it while writing tests
+- Don't look at it
+- Delete means delete
+```
+
+## Instruction priority
+
+Skills override default agent behavior, but **user instructions always take precedence**:
+
+1. User's explicit instructions (`CLAUDE.md`, `AGENTS.md`, direct requests) — highest priority
+2. Superpowers skills — override default system behavior where they conflict
+3. Default system prompt — lowest priority
+
+## The Iron Law
+
+```
+NO SKILL WITHOUT A FAILING TEST FIRST
+```
+
+Writing skills is Test-Driven Development applied to process documentation. You write a pressure scenario (test), watch the agent fail without the skill (RED), write the skill (GREEN), and close loopholes (REFACTOR).
+
+If you didn't watch an agent fail without the skill, you don't know if the skill teaches the right thing.
+
+See [Testing Skills](/contributing/testing-skills) for the complete methodology.
+
+## Skill creation checklist
+
+**RED phase — establish baseline:**
+- [ ] Create pressure scenarios with 3+ combined pressures
+- [ ] Run scenarios WITHOUT the skill — document failures verbatim
+- [ ] Identify patterns in rationalizations
+
+**GREEN phase — write the skill:**
+- [ ] Name uses only letters, numbers, hyphens
+- [ ] YAML frontmatter with `name` and `description` (max 1024 chars total)
+- [ ] Description starts with "Use when..." — triggering conditions only, no workflow summary
+- [ ] Description written in third person
+- [ ] Keywords throughout for discovery
+- [ ] Clear overview with core principle
+- [ ] Addresses the specific baseline failures from RED phase
+
+**REFACTOR phase — close loopholes:**
+- [ ] Identify new rationalizations from testing
+- [ ] Add explicit counters for discipline skills
+- [ ] Build rationalization table from test iterations
+- [ ] Re-test until bulletproof
+
+<CardGroup cols={2}>
+  <Card title="Skill Anatomy" icon="file-code" href="/contributing/skill-anatomy">
+    Understand the structure of a SKILL.md file in depth
+  </Card>
+  <Card title="Testing Skills" icon="flask" href="/contributing/testing-skills">
+    Verify your skill works before deploying it
+  </Card>
+</CardGroup>

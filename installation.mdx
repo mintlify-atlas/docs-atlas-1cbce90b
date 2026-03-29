@@ -1,0 +1,155 @@
+---
+title: "Installation"
+description: "Install Superpowers on Claude Code, Cursor, OpenCode, Codex, or Gemini CLI with platform-specific instructions."
+---
+
+Installation differs by platform. Claude Code and Cursor have built-in plugin marketplaces. OpenCode uses a plugin array in `opencode.json`. Codex and Gemini CLI have their own install mechanisms.
+
+<Tabs>
+  <Tab title="Claude Code (Official)">
+    Superpowers is available on the official Claude plugin marketplace. Run this command in Claude Code:
+
+    ```bash
+    /plugin install superpowers@claude-plugins-official
+    ```
+
+    This is the recommended install path for Claude Code users.
+  </Tab>
+
+  <Tab title="Claude Code (Marketplace)">
+    If you prefer to install from the community marketplace, register it first, then install Superpowers:
+
+    <Steps>
+      <Step title="Register the marketplace">
+        ```bash
+        /plugin marketplace add obra/superpowers-marketplace
+        ```
+      </Step>
+      <Step title="Install the plugin">
+        ```bash
+        /plugin install superpowers@superpowers-marketplace
+        ```
+      </Step>
+    </Steps>
+  </Tab>
+
+  <Tab title="Cursor">
+    In Cursor's agent chat, run:
+
+    ```text
+    /add-plugin superpowers
+    ```
+
+    Alternatively, search for "superpowers" in the Cursor plugin marketplace and install from there.
+  </Tab>
+
+  <Tab title="OpenCode">
+    Add Superpowers to the `plugin` array in your `opencode.json`. This can be your global config (`~/.config/opencode/opencode.json`) or a project-level file.
+
+    ```json
+    {
+      "plugin": ["superpowers@git+https://github.com/obra/superpowers.git"]
+    }
+    ```
+
+    Restart OpenCode. The plugin auto-installs via Bun and registers all skills automatically.
+
+    <Tip>
+      To pin a specific version, append the tag: `superpowers@git+https://github.com/obra/superpowers.git#v5.0.3`
+    </Tip>
+
+    **Migrating from the old symlink-based install**
+
+    If you previously installed Superpowers using `git clone` and symlinks, remove the old setup first:
+
+    ```bash
+    rm -f ~/.config/opencode/plugins/superpowers.js
+    rm -rf ~/.config/opencode/skills/superpowers
+    rm -rf ~/.config/opencode/superpowers
+    ```
+
+    Also remove any `skills.paths` entry in your `opencode.json` that pointed to the old clone, then follow the install steps above.
+  </Tab>
+
+  <Tab title="Codex">
+    Tell Codex:
+
+    ```text
+    Fetch and follow instructions from https://raw.githubusercontent.com/obra/superpowers/refs/heads/main/.codex/INSTALL.md
+    ```
+
+    Codex will clone the repository and create the required symlink in `~/.agents/skills/superpowers`. Skills are then discovered automatically at startup through Codex's native skill discovery.
+
+    **For subagent skills (optional)**
+
+    Skills like `dispatching-parallel-agents` and `subagent-driven-development` require Codex's multi-agent feature. Add this to your Codex config:
+
+    ```toml
+    [features]
+    multi_agent = true
+    ```
+
+    **Windows**
+
+    If you prefer to install manually on Windows, use a junction instead of a symlink:
+
+    ```powershell
+    New-Item -ItemType Directory -Force -Path "$env:USERPROFILE\.agents\skills"
+    cmd /c mklink /J "$env:USERPROFILE\.agents\skills\superpowers" "$env:USERPROFILE\.codex\superpowers\skills"
+    ```
+  </Tab>
+
+  <Tab title="Gemini CLI">
+    Install Superpowers as a Gemini extension:
+
+    ```bash
+    gemini extensions install https://github.com/obra/superpowers
+    ```
+
+    Gemini CLI loads skill metadata at session start and activates the full skill content on demand via the `activate_skill` tool.
+  </Tab>
+</Tabs>
+
+## Verify installation
+
+Start a new session in your chosen platform and ask for something that requires a skill:
+
+```text
+Tell me about your superpowers
+```
+
+or
+
+```text
+Help me plan this feature
+```
+
+The agent should describe the skills available or automatically invoke the brainstorming skill. If nothing happens, see the troubleshooting notes for your platform below.
+
+<Note>
+  If you installed on OpenCode, you can also run `use skill tool to list skills` to confirm all Superpowers skills are discovered.
+</Note>
+
+## Updating
+
+**Claude Code and Cursor:**
+
+```bash
+/plugin update superpowers
+```
+
+**OpenCode:**
+
+Superpowers updates automatically when you restart OpenCode — the plugin is re-fetched from the git repository on each launch.
+
+**Codex:**
+
+```bash
+cd ~/.codex/superpowers && git pull
+```
+
+**Gemini CLI:**
+
+```bash
+gemini extensions update superpowers
+```

@@ -1,0 +1,85 @@
+---
+title: "Claude Code"
+description: "Install Superpowers on Claude Code via the official plugin marketplace or the community marketplace."
+---
+
+Superpowers integrates with Claude Code through its plugin system. Skills load automatically via Claude Code's native `Skill` tool.
+
+## Installation
+
+<Tabs>
+  <Tab title="Official Marketplace (recommended)">
+    Superpowers is available in the [official Claude plugin marketplace](https://claude.com/plugins/superpowers).
+
+    In Claude Code, run:
+
+    ```bash
+    /plugin install superpowers@claude-plugins-official
+    ```
+  </Tab>
+  <Tab title="Community Marketplace">
+    Register the community marketplace first, then install:
+
+    ```bash
+    /plugin marketplace add obra/superpowers-marketplace
+    ```
+
+    ```bash
+    /plugin install superpowers@superpowers-marketplace
+    ```
+  </Tab>
+</Tabs>
+
+## Verify installation
+
+Start a new session and ask for something that triggers a skill:
+
+```text
+Help me plan this feature
+```
+
+or
+
+```text
+Let's debug this issue
+```
+
+The agent should automatically invoke the relevant Superpowers skill. You can also ask directly:
+
+```text
+Tell me about your superpowers
+```
+
+## How skills work in Claude Code
+
+Claude Code exposes a `Skill` tool that loads skill content on demand. The `using-superpowers` skill is loaded at session start and enforces the rule that agents must check for a relevant skill before taking any action.
+
+When a skill applies, the agent announces it:
+
+```text
+I'm using the brainstorming skill to refine your idea before writing any code.
+```
+
+Skills are **mandatory workflows**, not suggestions. If there is even a 1% chance a skill applies, the agent must invoke it.
+
+## Updating
+
+```bash
+/plugin update superpowers
+```
+
+Skills update automatically when you update the plugin.
+
+## Tool reference
+
+Skills in Superpowers are written using Claude Code tool names. All tools work natively:
+
+| Tool | Purpose |
+|------|---------|
+| `Skill` | Load a skill by name |
+| `TodoWrite` | Track task checklists |
+| `Task` | Dispatch subagents |
+
+<Note>
+  Subagent workflows (like `subagent-driven-development`) dispatch fresh Task subagents per task. This works natively in Claude Code.
+</Note>

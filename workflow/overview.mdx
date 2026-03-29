@@ -1,0 +1,83 @@
+---
+title: "Workflow overview"
+description: "The seven-step agentic development loop that Superpowers enforces from idea to merged branch."
+---
+
+Superpowers imposes a complete development workflow on your coding agent. Skills are not suggestions — they are mandatory checkpoints the agent MUST pass through. Every step activates automatically at the right moment.
+
+<Note>
+  The agent checks for relevant skills before any task. If there is even a 1% chance a skill applies, the agent invokes it. This is not optional behavior.
+</Note>
+
+## The seven-step loop
+
+<Steps>
+  <Step title="Brainstorming">
+    Before writing a single line of code, the agent explores the project context, asks clarifying questions one at a time, proposes 2–3 approaches with trade-offs, and presents a design in sections for your approval. A design document is saved to `docs/superpowers/specs/YYYY-MM-DD-<topic>-design.md` and committed. Implementation is **blocked** until you approve the spec.
+
+    [Learn more about brainstorming →](/workflow/brainstorming)
+  </Step>
+  <Step title="Creating a worktree">
+    After design approval, the agent creates an isolated git worktree on a new branch using the `using-git-worktrees` skill. This prevents any implementation from touching `main` or `master`. The worktree is verified to have a clean, passing test baseline before work begins.
+  </Step>
+  <Step title="Writing a plan">
+    With an approved spec and a clean worktree, the agent writes a detailed implementation plan: exact file paths, complete code, TDD steps, verification commands, and commit instructions for every task. Tasks are 2–5 minutes each. No placeholders, no "TBDs". The plan is saved to `docs/superpowers/plans/YYYY-MM-DD-<feature-name>.md`.
+
+    [Learn more about writing plans →](/workflow/writing-plans)
+  </Step>
+  <Step title="Executing the plan">
+    You choose how tasks are executed: subagent-driven (recommended) or inline. Subagent-driven dispatches a fresh subagent per task with isolated context and automatic two-stage review after each one. Inline execution runs tasks in sequence with human-in-the-loop checkpoints.
+
+    [Learn more about executing plans →](/workflow/executing-plans)
+  </Step>
+  <Step title="Test-driven development">
+    During execution, the `test-driven-development` skill enforces strict RED-GREEN-REFACTOR: write the failing test, watch it fail, write minimal code to pass, watch it pass, commit. Code written before a failing test is deleted. This happens for every task in the plan.
+  </Step>
+  <Step title="Code review between tasks">
+    After each task, the `requesting-code-review` skill runs a review against the plan and reports issues by severity. In subagent-driven mode, this is a two-stage review: spec compliance first (did the implementation match the plan?), then code quality (is it well-built?). Critical issues block the next task.
+  </Step>
+  <Step title="Finishing the branch">
+    When all tasks are complete, the `finishing-a-development-branch` skill verifies the full test suite, runs a final code reviewer subagent over the entire implementation, and presents exactly four options: merge locally, push and create a PR, keep the branch as-is, or discard. The worktree is cleaned up automatically for merge and discard.
+
+    [Learn more about finishing a branch →](/workflow/finishing-a-branch)
+  </Step>
+</Steps>
+
+## Skill priority hierarchy
+
+When skills conflict with other instructions, this order applies:
+
+| Priority | Source | Example |
+|----------|--------|---------|
+| 1 (highest) | User's explicit instructions | `CLAUDE.md`, `AGENTS.md`, direct requests |
+| 2 | Superpowers skills | brainstorming, writing-plans, TDD |
+| 3 (lowest) | Default system prompt | Platform defaults |
+
+If your `CLAUDE.md` says "skip TDD for this project" and the TDD skill says "always enforce RED-GREEN-REFACTOR," your explicit instruction wins. You are always in control.
+
+## How skills trigger automatically
+
+You do not invoke skills manually. The `using-superpowers` skill instructs your agent to check for relevant skills before responding to any message. The rule: if there is even a 1% chance a skill applies, the agent invokes it.
+
+Skills load their full instructions at invocation time — the agent does not rely on cached knowledge. This means skill updates take effect immediately without reinstalling Superpowers.
+
+<Note>
+  Skills are **rigid** (like TDD and debugging) or **flexible** (like design patterns). Rigid skills must be followed exactly. The skill itself tells you which kind it is.
+</Note>
+
+## Navigate the workflow
+
+<CardGroup cols={2}>
+  <Card title="Brainstorming" icon="comments" href="/workflow/brainstorming">
+    Refine ideas, explore approaches, produce a validated design doc before any code is written.
+  </Card>
+  <Card title="Writing plans" icon="list-check" href="/workflow/writing-plans">
+    Break the approved spec into 2–5 minute tasks with complete code and TDD steps.
+  </Card>
+  <Card title="Executing plans" icon="play" href="/workflow/executing-plans">
+    Dispatch subagents per task with two-stage review, or run inline with checkpoints.
+  </Card>
+  <Card title="Finishing a branch" icon="code-branch" href="/workflow/finishing-a-branch">
+    Verify tests, run a final review, and choose to merge, PR, keep, or discard.
+  </Card>
+</CardGroup>

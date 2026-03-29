@@ -1,0 +1,100 @@
+{
+  "projectType": "framework",
+  "projectName": "Superpowers",
+  "projectDescription": "An agentic skills framework that gives coding agents a structured software development methodology — covering design, planning, TDD, debugging, and code review — through composable skills that trigger automatically.",
+  "theme": "palm",
+  "primaryColor": "#dc7454",
+  "lightColor": null,
+  "darkColor": null,
+  "navigation": {
+    "tabs": [
+      {
+        "tab": "Documentation",
+        "groups": [
+          {
+            "group": "Get Started",
+            "pages": [
+              "introduction",
+              "installation",
+              "quickstart"
+            ]
+          },
+          {
+            "group": "The Workflow",
+            "pages": [
+              "workflow/overview",
+              "workflow/brainstorming",
+              "workflow/writing-plans",
+              "workflow/executing-plans",
+              "workflow/finishing-a-branch"
+            ]
+          },
+          {
+            "group": "Skills Reference",
+            "pages": [
+              "skills/test-driven-development",
+              "skills/systematic-debugging",
+              "skills/subagent-driven-development",
+              "skills/code-review",
+              "skills/git-worktrees"
+            ]
+          },
+          {
+            "group": "Platform Guides",
+            "pages": [
+              "platforms/claude-code",
+              "platforms/cursor",
+              "platforms/opencode",
+              "platforms/codex",
+              "platforms/gemini-cli"
+            ]
+          }
+        ]
+      },
+      {
+        "tab": "Contributing",
+        "groups": [
+          {
+            "group": "Extending Superpowers",
+            "pages": [
+              "contributing/writing-skills",
+              "contributing/skill-anatomy",
+              "contributing/testing-skills",
+              "contributing/submitting"
+            ]
+          }
+        ]
+      }
+    ]
+  },
+  "keyFeatures": [
+    "Composable skills library that triggers automatically based on task context",
+    "Structured brainstorming workflow that produces validated design specs before any code is written",
+    "Bite-sized implementation plan generation with exact file paths and complete code examples",
+    "Subagent-driven development with two-stage review (spec compliance, then code quality)",
+    "Strict Red-Green-Refactor TDD enforcement with deletion of code written before tests",
+    "4-phase systematic debugging process that mandates root cause investigation before any fix",
+    "Multi-platform support: Claude Code, Cursor, OpenCode, Codex, and Gemini CLI",
+    "Plugin marketplace integration for one-command install on supported platforms"
+  ],
+  "publicApiSurface": [
+    "skills/brainstorming — Socratic design refinement before any implementation",
+    "skills/writing-plans — Detailed TDD-first implementation plan generation",
+    "skills/executing-plans — Batch plan execution with human checkpoints",
+    "skills/subagent-driven-development — Fresh subagent per task with two-stage review",
+    "skills/test-driven-development — RED-GREEN-REFACTOR cycle enforcement",
+    "skills/systematic-debugging — 4-phase root cause investigation process",
+    "skills/verification-before-completion — Fix verification before declaring success",
+    "skills/requesting-code-review — Pre-review checklist and review dispatch",
+    "skills/receiving-code-review — Structured response to review feedback",
+    "skills/using-git-worktrees — Isolated parallel development branch setup",
+    "skills/finishing-a-development-branch — Merge/PR/discard decision workflow",
+    "skills/dispatching-parallel-agents — Concurrent subagent workflow patterns",
+    "skills/writing-skills — Guide for creating new skills following best practices",
+    "skills/using-superpowers — Entry point skill establishing session-wide skill usage rules",
+    "commands/brainstorm — Slash command to invoke brainstorming skill",
+    "commands/write-plan — Slash command to invoke writing-plans skill",
+    "commands/execute-plan — Slash command to invoke executing-plans skill",
+    "agents/code-reviewer — Reusable code reviewer agent definition"
+  ]
+}

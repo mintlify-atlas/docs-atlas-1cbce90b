@@ -1,0 +1,89 @@
+---
+title: "Brainstorming"
+description: "How Superpowers refines rough ideas into validated design documents through collaborative dialogue before any implementation begins."
+---
+
+The `brainstorming` skill activates before any creative work: creating features, building components, adding functionality, or modifying behavior. Its job is to turn a rough idea into a fully formed, user-approved design document — and to do nothing else until that document exists.
+
+<Warning>
+  **Hard gate:** The agent MUST NOT write code, scaffold a project, or invoke any implementation skill until the user has reviewed and approved the design. This applies to every project regardless of perceived simplicity.
+</Warning>
+
+## Anti-pattern: "This is too simple to need a design"
+
+Every project goes through brainstorming. A todo list, a single-function utility, a config change — all of them. Simple projects are where unexamined assumptions cause the most wasted work. The design can be short (a few sentences for truly simple projects), but you MUST present it and get approval before writing any code.
+
+## The nine-step checklist
+
+The agent creates a task for each item and completes them in order:
+
+<Steps>
+  <Step title="Explore project context">
+    Check files, docs, and recent commits to understand the current state before asking a single question. If the request spans multiple independent subsystems, flag it immediately and help decompose it into sub-projects — each with its own spec, plan, and implementation cycle.
+  </Step>
+  <Step title="Offer a visual companion">
+    If the topic will involve visual questions (mockups, layouts, diagrams), offer the browser-based visual companion in its own message — not combined with any other content. If the user declines, continue with text-only brainstorming.
+  </Step>
+  <Step title="Ask clarifying questions">
+    One question per message. Multiple-choice questions are preferred when possible. Focus on purpose, constraints, and success criteria. Do not ask the next question until the previous one is answered.
+  </Step>
+  <Step title="Propose 2–3 approaches">
+    Present distinct approaches with trade-offs. Lead with your recommended option and explain why. Present this conversationally, not as a formal list.
+  </Step>
+  <Step title="Present the design in sections">
+    Once you understand what you're building, present the design section by section, scaled to complexity. Ask after each section whether it looks right so far. Cover architecture, components, data flow, error handling, and testing. Revise until the user approves.
+  </Step>
+  <Step title="Write the design document">
+    Save the validated design to `docs/superpowers/specs/YYYY-MM-DD-<topic>-design.md` and commit it to git.
+  </Step>
+  <Step title="Spec self-review">
+    After writing the spec, review it with fresh eyes:
+    - **Placeholder scan:** Any "TBD", "TODO", incomplete sections, or vague requirements? Fix them.
+    - **Internal consistency:** Do any sections contradict each other?
+    - **Scope check:** Is this focused enough for a single implementation plan?
+    - **Ambiguity check:** Could any requirement be interpreted two different ways? Pick one and make it explicit.
+
+    Fix issues inline. No need to re-review — just fix and move on.
+  </Step>
+  <Step title="User reviews the spec">
+    Ask the user to review the written spec before proceeding:
+
+    > "Spec written and committed to `<path>`. Please review it and let me know if you want to make any changes before we start writing out the implementation plan."
+
+    Wait for the response. If changes are requested, make them and re-run the spec review. Only proceed once the user approves.
+  </Step>
+  <Step title="Transition to writing-plans">
+    Invoke the `writing-plans` skill to create the implementation plan. This is the **only** skill invoked after brainstorming — no frontend-design, no mcp-builder, no other implementation skill.
+  </Step>
+</Steps>
+
+## Key principles
+
+| Principle | What it means in practice |
+|-----------|--------------------------|
+| One question at a time | Never ask two questions in the same message |
+| Multiple choice preferred | Offer A/B/C options when you can, not open-ended questions |
+| YAGNI ruthlessly | Remove unnecessary features from every design |
+| Propose 2–3 approaches | Always explore alternatives before settling |
+| Incremental validation | Present each design section, get approval, then continue |
+| Design for isolation | Each unit has one clear purpose and a well-defined interface |
+
+## Design document location
+
+```
+docs/superpowers/specs/YYYY-MM-DD-<topic>-design.md
+```
+
+The user's preferences for spec location override this default if specified in `CLAUDE.md` or `AGENTS.md`.
+
+## What happens after brainstorming
+
+The only valid next step is `writing-plans`. The terminal state of this skill is invoking that skill with the approved design document as its input.
+
+<Tip>
+  After design approval, the `using-git-worktrees` skill creates an isolated workspace on a new branch. This happens before the `writing-plans` skill begins, ensuring implementation never touches `main` or `master`.
+</Tip>
+
+<Card title="Next: Writing plans" icon="list-check" href="/workflow/writing-plans">
+  Break the approved design into 2–5 minute implementation tasks with complete code and TDD steps.
+</Card>

@@ -1,0 +1,230 @@
+---
+title: "Git Worktrees"
+description: "Create isolated workspaces sharing the same repository so you can work on multiple branches simultaneously without switching context or polluting your main workspace."
+---
+
+## Overview
+
+Git worktrees let multiple working directories share a single `.git` repository. Each worktree has its own branch, its own files on disk, and its own clean state — without copying the repository or switching branches in your main workspace.
+
+In the Superpowers workflow, worktrees are required before executing any implementation plan. They isolate feature work so subagents don't interfere with the main workspace, parallel tasks don't conflict with each other, and failing tests in a new branch can't be confused with failing tests in the baseline.
+
+**Core principle:** Systematic directory selection + safety verification = reliable isolation.
+
+**Announce at start:** "I'm using the using-git-worktrees skill to set up an isolated workspace."
+
+## When the skill activates
+
+- After design approval, before writing implementation plans
+- Before executing any tasks with subagent-driven development
+- Before executing any tasks with executing-plans
+- Any time you need an isolated workspace for a new branch
+
+## Directory selection
+
+Follow this priority order — do not skip steps or assume a location.
+
+<Steps>
+  <Step title="Check for an existing worktrees directory">
+    ```bash
+    ls -d .worktrees 2>/dev/null     # preferred (hidden)
+    ls -d worktrees 2>/dev/null      # alternative
+    ```
+
+    If `.worktrees/` exists, use it. If `worktrees/` exists, use it. If both exist, `.worktrees/` wins.
+  </Step>
+
+  <Step title="Check CLAUDE.md for a preference">
+    ```bash
+    grep -i "worktree.*director" CLAUDE.md 2>/dev/null
+    ```
+
+    If a preference is specified, use it without asking.
+  </Step>
+
+  <Step title="Ask the user">
+    If no directory exists and no CLAUDE.md preference:
+
+    ```
+    No worktree directory found. Where should I create worktrees?
+
+    1. .worktrees/ (project-local, hidden)
+    2. ~/.config/superpowers/worktrees/<project-name>/ (global location)
+
+    Which would you prefer?
+    ```
+  </Step>
+</Steps>
+
+## Safety verification
+
+**For project-local directories (`.worktrees/` or `worktrees/`), you must verify the directory is git-ignored before creating the worktree.** If worktree contents are not ignored, they get tracked — accidentally committing worktree contents to the repository is a real risk.
+
+```bash
+# Check if the directory is ignored
+git check-ignore -q .worktrees 2>/dev/null || git check-ignore -q worktrees 2>/dev/null
+```
+
+**If NOT ignored:**
+
+1. Add the appropriate line to `.gitignore`
+2. Commit the change
+3. Then proceed with worktree creation
+
+For global directories (`~/.config/superpowers/worktrees/`), no `.gitignore` verification is needed — they're outside the project entirely.
+
+## Creation steps
+
+<Steps>
+  <Step title="Detect the project name">
+    ```bash
+    project=$(basename "$(git rev-parse --show-toplevel)")
+    ```
+  </Step>
+
+  <Step title="Create the worktree on a new branch">
+    ```bash
+    # Project-local
+    git worktree add .worktrees/$BRANCH_NAME -b $BRANCH_NAME
+
+    # Global location
+    git worktree add ~/.config/superpowers/worktrees/$project/$BRANCH_NAME -b $BRANCH_NAME
+    ```
+  </Step>
+
+  <Step title="Run project setup">
+    Auto-detect and run the appropriate setup for the project:
+
+    ```bash
+    # Node.js
+    if [ -f package.json ]; then npm install; fi
+
+    # Rust
+    if [ -f Cargo.toml ]; then cargo build; fi
+
+    # Python
+    if [ -f requirements.txt ]; then pip install -r requirements.txt; fi
+    if [ -f pyproject.toml ]; then poetry install; fi
+
+    # Go
+    if [ -f go.mod ]; then go mod download; fi
+    ```
+
+    If no `package.json`, `Cargo.toml`, or equivalent exists, skip dependency install.
+  </Step>
+
+  <Step title="Verify a clean test baseline">
+    Run the project's test suite to confirm the worktree starts clean:
+
+    ```bash
+    npm test       # Node.js
+    cargo test     # Rust
+    pytest         # Python
+    go test ./...  # Go
+    ```
+
+    **If tests fail:** Report the failures and ask whether to proceed or investigate. You cannot distinguish new bugs from pre-existing ones if you proceed from a broken baseline.
+
+    **If tests pass:** Report ready.
+  </Step>
+
+  <Step title="Report location">
+    ```
+    Worktree ready at /Users/jesse/myproject/.worktrees/auth
+    Tests passing (47 tests, 0 failures)
+    Ready to implement auth feature
+    ```
+  </Step>
+</Steps>
+
+## Example workflow
+
+```
+You: I'm using the using-git-worktrees skill to set up an isolated workspace.
+
+[Check .worktrees/ — exists]
+[Verify ignored — git check-ignore confirms .worktrees/ is ignored]
+[Create worktree: git worktree add .worktrees/auth -b feature/auth]
+[Run npm install]
+[Run npm test — 47 passing]
+
+Worktree ready at /Users/jesse/myproject/.worktrees/auth
+Tests passing (47 tests, 0 failures)
+Ready to implement auth feature
+```
+
+## Quick reference
+
+| Situation | Action |
+|-----------|--------|
+| `.worktrees/` exists | Use it (verify ignored first) |
+| `worktrees/` exists | Use it (verify ignored first) |
+| Both exist | Use `.worktrees/` |
+| Neither exists | Check CLAUDE.md → ask user |
+| Directory not ignored | Add to `.gitignore` + commit first |
+| Tests fail during baseline | Report failures + ask whether to proceed |
+| No `package.json`/`Cargo.toml` | Skip dependency install |
+
+## Common mistakes
+
+**Skipping ignore verification.** Worktree contents get tracked and pollute `git status`. Always run `git check-ignore` before creating a project-local worktree.
+
+**Assuming the directory location.** Creates inconsistency and violates project conventions. Follow the priority: existing > CLAUDE.md > ask.
+
+**Proceeding with failing tests.** You won't be able to distinguish new bugs from pre-existing ones. Report failures and get explicit permission to proceed.
+
+**Hardcoding setup commands.** Breaks on projects using different tools. Auto-detect from project files.
+
+## Red flags
+
+**Never:**
+- Create a worktree without verifying it's ignored (for project-local directories)
+- Skip baseline test verification
+- Proceed with failing tests without asking
+- Assume the directory location when ambiguous
+- Skip the CLAUDE.md check
+
+## Dispatching parallel agents across worktrees
+
+When you have multiple independent problems — different test files failing with different root causes, multiple subsystems broken independently — you can dispatch one agent per problem domain and let them work concurrently in separate worktrees.
+
+**Use when:**
+- 3+ test files failing with different root causes
+- Multiple subsystems broken independently
+- Each problem can be understood without context from the others
+- No shared state between investigations
+
+**Don't use when:**
+- Failures are related (fixing one might fix others)
+- Agents would edit the same files
+- You need full system state to understand the issue
+
+**The pattern:**
+
+```
+Group failures by what's broken:
+- File A tests: tool approval flow
+- File B tests: batch completion behavior
+- File C tests: abort functionality
+
+Dispatch one agent per domain:
+  Agent 1 → Fix agent-tool-abort.test.ts (timing/race issues)
+  Agent 2 → Fix batch-completion-behavior.test.ts (tools not executing)
+  Agent 3 → Fix tool-approval-race-conditions.test.ts (execution count = 0)
+```
+
+Each agent gets a focused task, self-contained context, clear goal, explicit constraints ("do NOT change production code"), and a specific output format ("return summary of root cause and changes made").
+
+After agents return: read each summary, check for conflicts, run the full test suite, integrate all changes.
+
+**From a real debugging session:** 6 failures across 3 files, 3 agents dispatched in parallel, all investigations completed concurrently, all fixes integrated successfully, zero conflicts between agent changes.
+
+## Integration
+
+**Called by:**
+- Brainstorming (phase 4) — required when design is approved and implementation follows
+- Subagent-driven development — required before executing any tasks
+- Executing Plans — required before executing any tasks
+
+**Pairs with:**
+- Finishing a development branch — required for cleanup after work is complete
